@@ -1,0 +1,17 @@
+{
+  "name": "chatapps",
+  "version": "1.0.0",
+  "description": "Realtime Chat Room App",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server",
+    "dev": "nodemon server"
+  },
+  "author": "Ilham Gibran",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "moment": "^2.29.0",
+    "socket.io": "^2.3.0"
+  }
+}
