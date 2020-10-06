@@ -222,6 +222,16 @@ a {
 	height: auto;
 }
 
+input[type="file"] {
+    display: none;
+}
+.custom-file-upload {
+	display: inline-block;
+	color: var(--light-color);
+    padding: 12px 10px 5px 0px;
+    cursor: pointer;
+}
+
 @media (max-width: 700px) {
 	.chat-main {
 		display: block;

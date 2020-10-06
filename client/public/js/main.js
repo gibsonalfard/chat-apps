@@ -60,6 +60,17 @@ messageBox.addEventListener("keypress", (e) => {
   }
 });
 
+// Save to Local Storage
+function saveToStorage(key, value){
+  localStorage.setItem(key, value);
+}
+
+// Find from Local Storage
+function findInLocal(key){
+  data = localStorage.getItem(key);
+  if
+}
+
 function notTyping(){
   console.log("Not Typing");
   clearTimeout(timeout)
@@ -71,8 +82,11 @@ function getBase64(file) {
   var reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = function () {
-    console.log(reader.result);
-    socket.emit("chatImage", reader.result);
+    var data = {
+      "name": file.name,
+      "media": reader.result
+    };
+    socket.emit("chatImage", data);
   };
   reader.onerror = function (error) {
     console.log('Error: ', error);
@@ -83,6 +97,7 @@ function getBase64(file) {
 uploadButton.addEventListener('change', function(){
   // var file = document.querySelector('#files > input[type="file"]').files[0];
   var file = this.files[0];
+  console.log(file);
   getBase64(file); // prints the base64 string
   this.value = '';
 }, false);
@@ -130,22 +145,23 @@ function outputImage(message){
   div.classList.add(classAdd); // "data:image/jpg;base64,"+b64(message.text)
   div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>`;
 
-  var mediaType = message.text.split(":")[1]
+  var mediaType = message.text.media.split(":")[1]
   mediaType = mediaType.split(";")[0];
   mediaType = mediaType.split("/")[0];
-
-  console.log(mediaType);
 
   mediaHTML = "";
   switch(mediaType){
     case "video":
-      mediaHTML = `<video class="img-msg" src="${message.text}" controls></video>`;
+      mediaHTML = `<video class="img-msg" src="${message.text.media}" controls></video>`;
     break;
     case "image":
-      mediaHTML = `<img class="img-msg" src="${message.text}"/>`;
+      mediaHTML = `<img class="img-msg" src="${message.text.media}"/>`;
+    break;
+    case "audio":
+      mediaHTML = `<audio class="img-msg" src="${message.text.media}" controls></audio>`;
     break;
     default:
-      mediaHTML = `<a href="${message.text}">Cannot Load Files</a>`;
+      mediaHTML = `<a href="${message.text.media}">${message.text.name}</a>`;
   }
 
   div.innerHTML += mediaHTML;
