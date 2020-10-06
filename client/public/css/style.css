@@ -6,6 +6,10 @@
 	--light-color: #e6e9ff;
 	--success-color: #5cb85c;
 	--error-color: #d9534f;
+
+	--my-message-color: #73E2A7;
+	--my-time-color: #80727B;
+	--my-name-color: #134611;
 }
 
 * {
@@ -91,12 +95,19 @@ a {
 	overflow-y: scroll;
 }
 
+.outer-message {
+	width: 100%;
+	float:left;
+}
+
 .chat-messages .message {
 	padding: 10px;
 	margin-bottom: 15px;
+	max-width: 80%;
 	background-color: var(--light-color);
 	border-radius: 5px;
 	overflow-wrap: break-word;
+	float: left;
 }
 
 .chat-messages .message .meta {
@@ -109,6 +120,28 @@ a {
 
 .chat-messages .message .meta span {
 	color: #777;
+}
+
+.chat-messages .message-mine {
+	padding: 10px;
+	margin-bottom: 15px;
+	max-width: 80%;
+	background-color: var(--my-message-color);
+	border-radius: 5px;
+	float: right;
+	overflow-wrap: break-word;
+}
+
+.chat-messages .message-mine .meta {
+	font-size: 15px;
+	font-weight: bold;
+	color: var(--my-name-color);
+	opacity: 0.7;
+	margin-bottom: 7px;
+}
+
+.chat-messages .message-mine .meta span {
+	color: var(--my-time-color);
 }
 
 .chat-form-container {
@@ -177,6 +210,16 @@ a {
 .join-main .btn {
 	margin-top: 20px;
 	width: 100%;
+}
+
+.typing-info {
+    font-size: 10pt;
+    padding: 5px;
+}
+
+.img-msg{
+	width: 250px;
+	height: auto;
 }
 
 @media (max-width: 700px) {

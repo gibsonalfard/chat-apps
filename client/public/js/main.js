@@ -1,12 +1,14 @@
-const socket = io();
+const socket = io('http://localhost:3000');
 const chatForm = document.getElementById("chat-form");
 const chatMessage = document.querySelector(".chat-messages");
 const roomName = document.getElementById('room-name');
 const userList = document.getElementById('users');
 const messageBox = document.getElementById('msg');
+const uploadButton = document.querySelector('#file-upload');
 
 var typing=false;
 var timeout=undefined;
+var fileByteArray = [];
 
 // Get username and room from URL
 const {username, room } = Qs.parse(location.search, {
@@ -33,12 +35,20 @@ socket.on('display', (data)=>{
 
 // Get Message from Server
 socket.on('message', message => {
-  console.log(message);
+  // console.log(message);
   outputMessage(message);
 
   // Scroll down
   chatMessage.scrollTop = chatMessage.scrollHeight;
 })
+
+// Get Message Image
+socket.on('messageImage', message => {
+  outputImage(message);
+
+  // Scroll down
+  chatMessage.scrollTop = chatMessage.scrollHeight;
+});
 
 // Message Typing
 messageBox.addEventListener("keypress", (e) => {
@@ -57,6 +67,26 @@ function notTyping(){
   socket.emit('typing', {username, typing, room});
 }
 
+function getBase64(file) {
+  var reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = function () {
+    console.log(reader.result);
+    socket.emit("chatImage", reader.result);
+  };
+  reader.onerror = function (error) {
+    console.log('Error: ', error);
+  };
+}
+
+// Upload Image
+uploadButton.addEventListener('change', function(){
+  // var file = document.querySelector('#files > input[type="file"]').files[0];
+  var file = this.files[0];
+  getBase64(file); // prints the base64 string
+  this.value = '';
+}, false);
+
 // Message sent
 chatForm.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -73,13 +103,38 @@ chatForm.addEventListener('submit', (e) => {
 
 // Output message to DOM
 function outputMessage(message){
+  const outerdiv = document.createElement("div");
+  outerdiv.classList.add("outer-message");
   const div = document.createElement("div");
-  div.classList.add('message');
+
+  classAdd = (username === message.username) ? "message-mine" : "message";
+  div.classList.add(classAdd);
   div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>
   <p class="text">
     ${message.text}
   </p>`;
-  document.querySelector(".message-container").appendChild(div);
+  outerdiv.appendChild(div);
+  document.querySelector(".message-container").appendChild(outerdiv);
+}
+
+function b64(e){var t="";var n=new Uint8Array(e);var r=n.byteLength;for(var i=0;i<r;i++){t+=String.fromCharCode(n[i])}return window.btoa(t)}
+
+// Output Image to DOM
+function outputImage(message){
+  const outerdiv = document.createElement("div");
+  outerdiv.classList.add("outer-message");
+  const div = document.createElement("div");
+  // const img = document.createElement("img");
+
+  classAdd = (username === message.username) ? "message-mine" : "message";
+  div.classList.add(classAdd); // "data:image/jpg;base64,"+b64(message.text)
+  // img.setAttribute("src", message.text);
+  // img.classList.add("img-msg");
+  // div.appendChild(img);
+  div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>
+  <img class="img-msg" src="${message.text}"/>`;
+  outerdiv.appendChild(div);
+  document.querySelector(".message-container").appendChild(outerdiv);
 }
 
 // Add room name to DOM
