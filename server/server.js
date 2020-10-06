@@ -35,24 +35,9 @@ io.on('connection', socket => {
         socket.join(user.room);
 
         for (msg of messageQueue[room]){
-            // if(msg.image){
-            //     socket.emit('messageImage', formatMessage(msg.username, msg.message));
-            // }else{
-            //     socket.emit("message", formatMessage(msg.username, msg.message));
-            // }
             emitType = msg.image ? "messageImage" : "message";
             socket.emit(emitType, formatMessage(msg.username, msg.message));
         }
-
-        // Send Image
-        // fs.readFile('sample.jpg', function(err, data){
-        //     socket.emit('messageImage', formatMessage(botName, data));
-        //     console.log(data);
-        //     // socket.emit('imageConversionByServer', "data:image/png;base64,"+ data.toString("base64"));
-        // });
-
-        // Say Hi to Someone who connect
-        // socket.emit("message", formatMessage(botName, 'Welcome to Chat Apps'));
 
         // Broadcast when user connect to room
         socket.broadcast
@@ -87,8 +72,6 @@ io.on('connection', socket => {
             message: msg,
             image: true
         });
-
-        console.log(msg);
 
         io.to(user.room).emit('messageImage', formatMessage(user.username, msg));
     });

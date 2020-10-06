@@ -128,11 +128,28 @@ function outputImage(message){
 
   classAdd = (username === message.username) ? "message-mine" : "message";
   div.classList.add(classAdd); // "data:image/jpg;base64,"+b64(message.text)
-  // img.setAttribute("src", message.text);
-  // img.classList.add("img-msg");
-  // div.appendChild(img);
-  div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>
-  <img class="img-msg" src="${message.text}"/>`;
+  div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>`;
+
+  var mediaType = message.text.split(":")[1]
+  mediaType = mediaType.split(";")[0];
+  mediaType = mediaType.split("/")[0];
+
+  console.log(mediaType);
+
+  mediaHTML = "";
+  switch(mediaType){
+    case "video":
+      mediaHTML = `<video class="img-msg" src="${message.text}" controls></video>`;
+    break;
+    case "image":
+      mediaHTML = `<img class="img-msg" src="${message.text}"/>`;
+    break;
+    default:
+      mediaHTML = `<a href="${message.text}">Cannot Load Files</a>`;
+  }
+
+  div.innerHTML += mediaHTML;
+
   outerdiv.appendChild(div);
   document.querySelector(".message-container").appendChild(outerdiv);
 }
