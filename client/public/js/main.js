@@ -44,7 +44,19 @@ socket.on('message', message => {
 
 // Get Message Image
 socket.on('messageImage', message => {
+  saveToStorage(message.name, message.media);
   outputImage(message);
+
+  // Scroll down
+  chatMessage.scrollTop = chatMessage.scrollHeight;
+});
+
+// Get Message Media
+socket.on('messageMedia', message => {
+  data = findInLocal(message.text);
+  if(data){
+    outputImage(data);
+  }
 
   // Scroll down
   chatMessage.scrollTop = chatMessage.scrollHeight;
@@ -60,15 +72,24 @@ messageBox.addEventListener("keypress", (e) => {
   }
 });
 
+// Request to Server For Media
+function requestMedia(key){
+  socket.emit("requestMedia", key);
+}
+
 // Save to Local Storage
 function saveToStorage(key, value){
-  localStorage.setItem(key, value);
+  sessionStorage.setItem(key, value);
 }
 
 // Find from Local Storage
 function findInLocal(key){
-  data = localStorage.getItem(key);
-  if
+  data = sessionStorage.getItem(key);
+  if(data){
+    return data;
+  }else{
+    requestMedia(key);
+  }
 }
 
 function notTyping(){
@@ -95,11 +116,15 @@ function getBase64(file) {
 
 // Upload Image
 uploadButton.addEventListener('change', function(){
-  // var file = document.querySelector('#files > input[type="file"]').files[0];
-  var file = this.files[0];
-  console.log(file);
-  getBase64(file); // prints the base64 string
-  this.value = '';
+  if(this.files[0].size > (1024*1024*2)){
+      alert("File is too big!");
+      this.value = "";
+  }else{
+    var file = this.files[0];
+    console.log(file);
+    getBase64(file); // prints the base64 string
+    this.value = '';
+  }
 }, false);
 
 // Message sent
@@ -116,17 +141,26 @@ chatForm.addEventListener('submit', (e) => {
   e.target.elements.msg.focus();
 });
 
+function detectLink(text){
+  var regex = /((https?:)\/\/)?(\\:\\d+)?((www\.)?([A-Za-z]+(\.[A-Za-z]+)+)|((\d{1,3}\.){3}\d{1,3}))(\:)?(\d+)?/g;
+  return text.replace(regex, function(link){
+    return `<a href="${link}">${link}</a>`;
+  });
+}
+
 // Output message to DOM
 function outputMessage(message){
   const outerdiv = document.createElement("div");
   outerdiv.classList.add("outer-message");
   const div = document.createElement("div");
 
+  var result = detectLink(message.text);
+
   classAdd = (username === message.username) ? "message-mine" : "message";
   div.classList.add(classAdd);
   div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>
   <p class="text">
-    ${message.text}
+    ${result}
   </p>`;
   outerdiv.appendChild(div);
   document.querySelector(".message-container").appendChild(outerdiv);

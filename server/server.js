@@ -35,8 +35,9 @@ io.on('connection', socket => {
         socket.join(user.room);
 
         for (msg of messageQueue[room]){
-            emitType = msg.image ? "messageImage" : "message";
-            socket.emit(emitType, formatMessage(msg.username, msg.message));
+            var emitType = msg.image ? "messageMedia" : "message";
+            var data =  msg.image ? msg.message.name : msg.message;
+            socket.emit(emitType, formatMessage(msg.username, data));
         }
 
         // Broadcast when user connect to room
@@ -81,6 +82,23 @@ io.on('connection', socket => {
         const user = getCurrentUser(socket.id);
         
         io.to(user.room).emit('display', msg);
+    });
+
+    // Request Media from Client
+    socket.on('requestMedia', (key) => {
+        const user = getCurrentUser(socket.id);
+        message = null;
+
+        for(msg of messageQueue[user.room]){
+            if(msg.message.name == key){
+                message = msg.message;
+                break;
+            }
+        }
+        // console.log(message);
+        if(message){
+            io.to(user.room).emit('messageImage', formatMessage(user.username, message));
+        }
     });
 
     // Broadcast when user disconnects to room
