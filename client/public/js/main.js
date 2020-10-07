@@ -158,9 +158,15 @@ chatForm.addEventListener('submit', (e) => {
 });
 
 function detectLink(text){
-  var regex = /((https?:)\/\/)?(\\:\\d+)?((www\.)?([A-Za-z]+(\.[A-Za-z]+)+)|((\d{1,3}\.){3}\d{1,3}))(\:)?(\d+)?/g;
+  var regex = /((https?:)\/\/)?(\\:\\d+)?((www\.)?([A-Za-z]+(\.[A-Za-z]+)+)|((\d{1,3}\.){3}\d{1,3}))(\:)?(\d+)?((\/[\w]+)+)?/g;
   return text.replace(regex, function(link){
-    return `<a href="${link}">${link}</a>`;
+    url = link;
+    protocol = url.split("//")[0]
+    if(protocol != "http:" && protocol != "https:"){
+      url = "https://"+url;
+    }
+    
+    return `<a href="${url}" target="_blank">${link}</a>`;
   });
 }
 
