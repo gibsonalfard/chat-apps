@@ -4,6 +4,7 @@ const moment = require('moment');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const db = require("./config/mongodb");
 const socketio = require('socket.io');
 const formatMessage = require("./utils/messages");
 const { userJoin, getCurrentUser, userLeave, getRoomUsers } = require("./utils/users");
@@ -20,6 +21,21 @@ var messageQueue = {};
 // Set Static folder
 // app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true })); 
+
+// Connect to MongoDB
+db.mongoose.connect(db.url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    dbName: "chatapp"
+})
+    .then(() => {
+        console.log("Connected to MongoDB!");
+    })
+    .catch(err => {
+        console.log(db.url);
+        console.log("Cannot connect to MongoDB!", err);
+        process.exit();
+    });
 
 // Run Client Connection
 io.on('connection', socket => {
