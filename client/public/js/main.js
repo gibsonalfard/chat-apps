@@ -33,6 +33,14 @@ socket.on('display', (data)=>{
     typingInfo.innerHTML = "";
 })
 
+// Get Notification from Admin
+socket.on('notification', message => {
+  outputNotif(message);
+
+  // Scroll down
+  chatMessage.scrollTop = chatMessage.scrollHeight;
+});
+
 // Get Message from Server
 socket.on('message', message => {
   outputMessage(message);
@@ -184,6 +192,19 @@ function outputMessage(message){
   <p class="text">
     ${result}
   </p>`;
+  outerdiv.appendChild(div);
+  document.querySelector(".message-container").appendChild(outerdiv);
+}
+
+// Output notif to DOM
+function outputNotif(message){
+  const outerdiv = document.createElement("div");
+  outerdiv.classList.add("outer-message");
+  const div = document.createElement("div");
+
+  div.classList.add("admin-notification");
+
+  div.innerHTML = `<span>${message.time} - ${message.text}</span></p>`;
   outerdiv.appendChild(div);
   document.querySelector(".message-container").appendChild(outerdiv);
 }

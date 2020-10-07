@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const moment = require('moment');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -25,10 +26,6 @@ io.on('connection', socket => {
     socket.on('joinRoom', ({username, room}) => {
         if(!messageQueue[room]){
             messageQueue[room] = []
-            messageQueue[room].push({
-                username: botName,
-                message: 'Welcome to Chat Apps'
-            });
         }
 
         const user = userJoin(socket.id, username, room);
@@ -37,13 +34,15 @@ io.on('connection', socket => {
         for (msg of messageQueue[room]){
             var emitType = msg.image ? "messageMedia" : "message";
             var data =  msg.image ? msg.message.name : msg.message;
-            socket.emit(emitType, formatMessage(msg.username, data));
+            socket.emit(emitType, formatMessage(msg.username, data, msg.time));
         }
+
+        socket.emit("notification", formatMessage(botName, 'Welcome to Chat Apps'));
 
         // Broadcast when user connect to room
         socket.broadcast
             .to(user.room)
-            .emit("message", formatMessage(botName, `${user.username} join the chat`));
+            .emit("notification", formatMessage(botName, `${user.username} join the chat`));
 
         // Send user and room info
         io.to(user.room).emit('roomUsers', {
@@ -56,25 +55,29 @@ io.on('connection', socket => {
     socket.on('chatMessage', (msg) => {
         const user = getCurrentUser(socket.id);
 
+        time = moment().format("h:mm a");
         messageQueue[user.room].push({
             username: user.username,
-            message: msg
+            message: msg,
+            time: time
         });
 
-        io.to(user.room).emit('message', formatMessage(user.username, msg));
+        io.to(user.room).emit('message', formatMessage(user.username, msg, time));
     });
 
     // Listen for chat image
     socket.on('chatImage', (msg) => {
         const user = getCurrentUser(socket.id);
 
+        time = moment().format("h:mm a");
         messageQueue[user.room].push({
             username: user.username,
             message: msg,
-            image: true
+            image: true,
+            time: time
         });
 
-        io.to(user.room).emit('messageImage', formatMessage(user.username, msg));
+        io.to(user.room).emit('messageImage', formatMessage(user.username, msg, time));
     });
 
     // Output on Typing
@@ -106,7 +109,7 @@ io.on('connection', socket => {
         const user = userLeave(socket.id);
 
         if(user){
-            io.to(user.room).emit("message", formatMessage(botName, `${user.username} has left the chat`));
+            io.to(user.room).emit("notification", formatMessage(botName, `${user.username} has left the chat`));
 
             // Send user and room info
             io.to(user.room).emit('roomUsers', {

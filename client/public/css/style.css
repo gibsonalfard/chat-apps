@@ -231,6 +231,15 @@ input[type="file"] {
     padding: 12px 10px 5px 0px;
     cursor: pointer;
 }
+.admin-notification {
+	padding: 10px;
+	margin-bottom: 15px;
+	max-width: 80%;
+	background-color: var(--my-message-color);
+	border-radius: 100px;
+	text-align: center;
+	overflow-wrap: break-word;
+}
 
 @media (max-width: 700px) {
 	.chat-main {
