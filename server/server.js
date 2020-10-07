@@ -91,13 +91,13 @@ io.on('connection', socket => {
 
         for(msg of messageQueue[user.room]){
             if(msg.message.name == key){
-                message = msg.message;
+                message = msg;
                 break;
             }
         }
-        // console.log(message);
+        console.log(message);
         if(message){
-            io.to(user.room).emit('messageImage', formatMessage(user.username, message));
+            io.to(user.room).emit('requestMedia', formatMessage(message.username, message.message));
         }
     });
 

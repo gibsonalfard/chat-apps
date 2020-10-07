@@ -35,7 +35,6 @@ socket.on('display', (data)=>{
 
 // Get Message from Server
 socket.on('message', message => {
-  // console.log(message);
   outputMessage(message);
 
   // Scroll down
@@ -44,8 +43,19 @@ socket.on('message', message => {
 
 // Get Message Image
 socket.on('messageImage', message => {
-  saveToStorage(message.name, message.media);
+  saveToStorage(message.text.name, message.text.media);
   outputImage(message);
+
+  // Scroll down
+  chatMessage.scrollTop = chatMessage.scrollHeight;
+});
+
+socket.on('requestMedia', message => {
+  saveToStorage(message.text.name, message.text.media);
+
+  if(username != message.username){
+    outputImage(message);
+  }
 
   // Scroll down
   chatMessage.scrollTop = chatMessage.scrollHeight;
@@ -53,9 +63,14 @@ socket.on('messageImage', message => {
 
 // Get Message Media
 socket.on('messageMedia', message => {
-  data = findInLocal(message.text);
+  key = message.text
+  data = findInLocal(key);
   if(data){
-    outputImage(data);
+    message.text = {
+      name: key,
+      media: data
+    }
+    outputImage(message);
   }
 
   // Scroll down
@@ -86,6 +101,7 @@ function saveToStorage(key, value){
 function findInLocal(key){
   data = sessionStorage.getItem(key);
   if(data){
+    // console.log(data)
     return data;
   }else{
     requestMedia(key);
@@ -192,7 +208,7 @@ function outputImage(message){
       mediaHTML = `<img class="img-msg" src="${message.text.media}"/>`;
     break;
     case "audio":
-      mediaHTML = `<audio class="img-msg" src="${message.text.media}" controls></audio>`;
+      mediaHTML = `<audio src="${message.text.media}" controls></audio>`;
     break;
     default:
       mediaHTML = `<a href="${message.text.media}">${message.text.name}</a>`;
