@@ -13,6 +13,8 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
+io.origins('*:*');
+
 const botName = "Administrator";
 const viewDir = path.join(__dirname, 'public');
 
@@ -49,7 +51,7 @@ io.on('connection', socket => {
         for (msg of messageQueue[room]){
             var emitType = msg.image ? "messageMedia" : "message";
             var data =  msg.image ? msg.message.name : msg.message;
-            socket.emit(emitType, formatMessage(msg.username, data, msg.time, host));
+            socket.emit(emitType, formatMessage(msg.username, data, msg.time, msg.host));
         }
 
         if(newUser){
@@ -74,10 +76,13 @@ io.on('connection', socket => {
 
         time = moment().format("h:mm a");
         messageQueue[user.room].push({
+            host:host,
             username: user.username,
             message: msg,
             time: time
         });
+
+        console.log(messageQueue[user.room]);
 
         io.to(user.room).emit('message', formatMessage(user.username, msg, time, host));
     });
@@ -88,6 +93,7 @@ io.on('connection', socket => {
 
         time = moment().format("h:mm a");
         messageQueue[user.room].push({
+            host:host,
             username: user.username,
             message: msg,
             image: true,
@@ -127,20 +133,23 @@ io.on('connection', socket => {
         host = removeUserById(socket.id);
         
         account = getCurrentUser(host);
-        account.life -= 1;
-        if(account.life == 0){
-            const user = userLeave(host);
+        if(account){
+            account.life -= 1;
 
-            if(user){
-                io.to(user.room).emit("notification", formatMessage(botName, `${user.username} has left the chat`));
-
-                // Send user and room info
-                io.to(user.room).emit('roomUsers', {
-                    room: user.room,
-                    users: getRoomUsers(user.room)
-                });
-
-                listUser();
+            if(account.life == 0){
+                const user = userLeave(host);
+    
+                if(user){
+                    io.to(user.room).emit("notification", formatMessage(botName, `${user.username} has left the chat`));
+    
+                    // Send user and room info
+                    io.to(user.room).emit('roomUsers', {
+                        room: user.room,
+                        users: getRoomUsers(user.room)
+                    });
+    
+                    listUser();
+                }
             }
         }
     });
