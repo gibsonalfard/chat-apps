@@ -1,4 +1,5 @@
-const socket = io('http://localhost:3000');
+// const socket = io('https://ic-chat-server.herokuapp.com');
+const socket = io('chat-server:3000');
 const chatForm = document.getElementById("chat-form");
 const chatMessage = document.querySelector(".chat-messages");
 const roomName = document.getElementById('room-name');
@@ -9,6 +10,10 @@ const uploadButton = document.querySelector('#file-upload');
 var typing=false;
 var timeout=undefined;
 var fileByteArray = [];
+
+// If your site is on Cloudflare, then you can use '/cdn-cgi/trace' instead
+console.log(location);
+console.log(location.hostname);
 
 // Get username and room from URL
 const {username, room } = Qs.parse(location.search, {

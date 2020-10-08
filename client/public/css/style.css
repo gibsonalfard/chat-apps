@@ -232,13 +232,19 @@ input[type="file"] {
     cursor: pointer;
 }
 .admin-notification {
-	padding: 10px;
+	background-color: #e6e9ff;
+	width: 60%;
 	margin-bottom: 15px;
-	max-width: 80%;
-	background-color: var(--my-message-color);
+	padding-top: 5px;
+	height: 25px;
+	font-size: 10pt;
+	font-weight: 500;
 	border-radius: 100px;
 	text-align: center;
 	overflow-wrap: break-word;
+	display: block;
+  	margin-left: auto;
+  	margin-right: auto
 }
 
 @media (max-width: 700px) {

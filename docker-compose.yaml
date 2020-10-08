@@ -1,0 +1,23 @@
+version: "3.3"
+
+networks:
+    websocket-network:
+
+services:
+    chat-server:
+        container_name: chat-server
+        image: chat-server:1.0
+        build: ./server
+        networks: 
+            - websocket-network
+    
+    chat-client:
+        container_name: chat-client
+        image: chat-client:1.0
+        build: ./client
+        ports: 
+            - 8080:8088
+        networks: 
+            - websocket-network
+        depends_on: 
+            - chat-server
