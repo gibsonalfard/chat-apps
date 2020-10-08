@@ -3,7 +3,13 @@ module.exports = mongoose => {
         "user",
         mongoose.Schema({
             id: String,
-            username: String,            
+            username: String,
+            rooms: [
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "room"
+                }
+            ],   
         }), 
         "user"
     );

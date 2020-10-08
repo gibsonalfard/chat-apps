@@ -2,8 +2,13 @@ module.exports = mongoose => {
     const Room = mongoose.model(
         "room",
         mongoose.Schema({
-            room_name: String,
-            members:[mongoose.Schema.Types.Mixed],
+            name: String,
+            members: [
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "user"
+                }
+            ],
         }), 
         "room"
     );

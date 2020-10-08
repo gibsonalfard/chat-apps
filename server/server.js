@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const db = require("./config/mongodb");
 const socketio = require('socket.io');
-const formatMessage = require("./utils/messages");
+const { formatMessage, storeMessage } = require("./utils/messages");
 const { userJoin, getCurrentUser, userLeave, getRoomUsers } = require("./utils/users");
 
 const app = express();
@@ -40,6 +40,7 @@ db.mongoose.connect(db.url, {
 // Run Client Connection
 io.on('connection', socket => {
     socket.on('joinRoom', ({username, room}) => {
+        // If room is not exist, create message queue
         if(!messageQueue[room]){
             messageQueue[room] = []
         }
@@ -71,12 +72,23 @@ io.on('connection', socket => {
     socket.on('chatMessage', (msg) => {
         const user = getCurrentUser(socket.id);
 
-        time = moment().format("h:mm a");
+        const moment_date = moment();
+        time = moment_date.format("h:mm a");
         messageQueue[user.room].push({
             username: user.username,
             message: msg,
             time: time
         });
+
+        const message = {
+            username: user.username,
+            message: msg,
+            datetime: moment_date.toDate(),
+            room_name: user.room,
+            indexInRoom: messageQueue[user.room].length-1,
+        }
+
+        storeMessage(message);
 
         io.to(user.room).emit('message', formatMessage(user.username, msg, time));
     });
@@ -85,13 +97,27 @@ io.on('connection', socket => {
     socket.on('chatImage', (msg) => {
         const user = getCurrentUser(socket.id);
 
-        time = moment().format("h:mm a");
+        const moment_date = moment();
+        time = moment_date.format("h:mm a");
         messageQueue[user.room].push({
             username: user.username,
             message: msg,
             image: true,
             time: time
         });
+
+        const message = {
+            username: user.username,
+            message: {
+                filename: msg.name,
+                data: msg.media
+            },
+            datetime: moment_date.toDate(),
+            room_name: user.room,
+            indexInRoom: messageQueue[user.room].length-1,
+        }
+
+        storeMessage(message);
 
         io.to(user.room).emit('messageImage', formatMessage(user.username, msg, time));
     });

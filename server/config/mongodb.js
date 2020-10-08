@@ -9,6 +9,5 @@ db.url = url;
 db.User = require("../models/User")(mongoose);
 db.Room = require("../models/Room")(mongoose);
 db.Message = require("../models/Message")(mongoose);
-db.Media = require("../models/Media")(mongoose);
 
 module.exports = db;

@@ -1,7 +1,6 @@
+const mongo = require("./mongo");
+
 const users = [];
-const db = require("../config/mongodb");
-const User = db.User;
-const Room = db.Room;
 
 // Join user to chat
 function userJoin(id, username, room){
@@ -9,64 +8,9 @@ function userJoin(id, username, room){
 
     users.push(user);
 
-    user_obj = {id, username};
-    insertUserData(user_obj);
-
-    addMemberToRoom(user_obj, room);
+    mongo.userJoinRoom(user, room);
 
     return user;
-}
-
-async function insertUserData(user){
-    User.create(user)
-        .then(function (data) {
-            // console.log(`user: ${data}`);
-        }).catch(function (err) {
-            console.log(err)
-        });
-}
-
-async function addMemberToRoom(user_obj, room){
-    const query = {"room_name": room};
-    const update = {
-        $push: {
-            members: user_obj
-        }
-    }
-    const options = { upsert: true, new: true, setDefaultsOnInsert: true };
-    Room.findOneAndUpdate(query, update, options, function(error, result) {
-        if (error) {
-            console.log(error);
-        } else {
-            console.log(result);
-        }    
-    });
-}
-
-async function removeMemberFromRoom(user_obj, room){
-    const query = {"room_name": room};
-    const update = {
-        $pull: {
-            members: user_obj
-        }
-    }
-    const options = { upsert: true, new: true, setDefaultsOnInsert: true };
-    Room.findOneAndUpdate(query, update, options, function(error, result) {
-        if (error) {
-            console.log(error);
-        } else {
-            console.log(result);
-            if(result.members.length <= 0){
-                Room.deleteOne(result, function (err, deletedDoc) {
-                    if (err){
-                        console.log(err);
-                    } else { 
-                        console.log(`Deleted: ${deletedDoc}`);
-                    }
-                });
-            }
-        }    
-    });
 }
 
 // Get Current User
@@ -78,7 +22,6 @@ function getCurrentUser(id) {
 function userLeave(id){
     const index = users.findIndex(user => user.id === id);
 
-
     if(index !== -1){
         const user = users.splice(index, 1)[0];
         const user_obj = {
@@ -86,7 +29,7 @@ function userLeave(id){
             username: user.username
         };
         const room = user.room;
-        removeMemberFromRoom(user_obj, room);
+        mongo.userLeaveRoom(user_obj, room);
         return user;
     }
 }
