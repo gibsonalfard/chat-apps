@@ -8,16 +8,40 @@ services:
         container_name: chat-server
         image: chat-server:1.0
         build: ./server
-        networks: 
-            - websocket-network
+        network_mode: bridge
     
     chat-client:
         container_name: chat-client
         image: chat-client:1.0
         build: ./client
         ports: 
-            - 8080:8088
-        networks: 
-            - websocket-network
+            - 8088:8088
+        network_mode: bridge
         depends_on: 
             - chat-server
+        environment: 
+            - PORT=8088
+    
+    chat-client-2:
+        container_name: chat-client-2
+        image: chat-client:1.0
+        build: ./client
+        ports: 
+            - 8081:8081
+        network_mode: bridge
+        depends_on: 
+            - chat-server
+        environment: 
+            - PORT=8081
+    
+    chat-client-3:
+        container_name: chat-client-3
+        image: chat-client:1.0
+        build: ./client
+        ports: 
+            - 8082:8082
+        network_mode: bridge
+        depends_on: 
+            - chat-server
+        environment: 
+            - PORT=8082

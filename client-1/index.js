@@ -14,6 +14,6 @@ io.origins('*:*');
 // Set Static Folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-const PORT = 8088 || process.env.PORT;
+const PORT = 8081 || process.env.PORT;
 
 server.listen(PORT, () => console.log(`Client running on port ${PORT}`));

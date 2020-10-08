@@ -193,7 +193,6 @@ function outputMessage(message){
   const div = document.createElement("div");
 
   var result = detectLink(message.text);
-
   classAdd = (host === message.host) ? "message-mine" : "message";
   div.classList.add(classAdd);
   div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>
