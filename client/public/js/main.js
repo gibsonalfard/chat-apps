@@ -1,11 +1,12 @@
 // const socket = io('https://ic-chat-server.herokuapp.com');
-const socket = io('chat-server:3000');
+const socket = io('localhost:3000');
 const chatForm = document.getElementById("chat-form");
 const chatMessage = document.querySelector(".chat-messages");
 const roomName = document.getElementById('room-name');
 const userList = document.getElementById('users');
 const messageBox = document.getElementById('msg');
 const uploadButton = document.querySelector('#file-upload');
+const host = location.host;
 
 var typing=false;
 var timeout=undefined;
@@ -13,7 +14,7 @@ var fileByteArray = [];
 
 // If your site is on Cloudflare, then you can use '/cdn-cgi/trace' instead
 console.log(location);
-console.log(location.hostname);
+// console.log(location.hostname);
 
 // Get username and room from URL
 const {username, room } = Qs.parse(location.search, {
@@ -21,7 +22,7 @@ const {username, room } = Qs.parse(location.search, {
 });
 
 // Join chatroom
-socket.emit('joinRoom', {username, room});
+socket.emit('joinRoom', {host, username, room});
 
 // Get room and users
 socket.on('roomUsers', ({ room, users }) => {
@@ -58,6 +59,7 @@ socket.on('message', message => {
 socket.on('messageImage', message => {
   saveToStorage(message.text.name, message.text.media);
   outputImage(message);
+  console.log("I hate to looking");
 
   // Scroll down
   chatMessage.scrollTop = chatMessage.scrollHeight;
@@ -94,7 +96,7 @@ socket.on('messageMedia', message => {
 messageBox.addEventListener("keypress", (e) => {
   if(e.which!=13){
     typing=true;
-    socket.emit('typing', {username, typing, room});
+    socket.emit('typing', {host, username, typing, room});
     clearTimeout(timeout);
     timeout=setTimeout(notTyping, 3000);
   }
@@ -102,7 +104,7 @@ messageBox.addEventListener("keypress", (e) => {
 
 // Request to Server For Media
 function requestMedia(key){
-  socket.emit("requestMedia", key);
+  socket.emit("requestMedia", {host, key});
 }
 
 // Save to Local Storage
@@ -125,7 +127,7 @@ function notTyping(){
   console.log("Not Typing");
   clearTimeout(timeout)
   typing = false;
-  socket.emit('typing', {username, typing, room});
+  socket.emit('typing', {host, username, typing, room});
 }
 
 function getBase64(file) {
@@ -133,6 +135,7 @@ function getBase64(file) {
   reader.readAsDataURL(file);
   reader.onload = function () {
     var data = {
+      "host": host,
       "name": file.name,
       "media": reader.result
     };
@@ -163,7 +166,7 @@ chatForm.addEventListener('submit', (e) => {
 
   // Emit message to server
   const msg = e.target.elements.msg.value;
-  socket.emit('chatMessage', msg);
+  socket.emit('chatMessage', {host, msg});
 
   // Clear Input
   e.target.elements.msg.value = "";
@@ -191,7 +194,7 @@ function outputMessage(message){
 
   var result = detectLink(message.text);
 
-  classAdd = (username === message.username) ? "message-mine" : "message";
+  classAdd = (host === message.host) ? "message-mine" : "message";
   div.classList.add(classAdd);
   div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>
   <p class="text">
@@ -223,7 +226,7 @@ function outputImage(message){
   const div = document.createElement("div");
   // const img = document.createElement("img");
 
-  classAdd = (username === message.username) ? "message-mine" : "message";
+  classAdd = (host === message.host) ? "message-mine" : "message";
   div.classList.add(classAdd); // "data:image/jpg;base64,"+b64(message.text)
   div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>`;
 
