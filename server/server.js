@@ -93,7 +93,7 @@ io.on('connection', socket => {
 
         time = moment().format("h:mm a");
         messageQueue[user.room].push({
-            host:host,
+            host:msg.host,
             username: user.username,
             message: msg,
             image: true,
