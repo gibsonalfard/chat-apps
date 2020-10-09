@@ -16,8 +16,6 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
-io.origins('*:*');
-
 const botName = "Administrator";
 const viewDir = path.join(__dirname, 'public');
 
@@ -29,7 +27,18 @@ var socketIdList = [];
 app.use(bodyParser.urlencoded({ extended: true })); 
 
 // Fixing CORS
+io.origins('*:*');
 app.use(cors());
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    if ('OPTIONS' == req.method) {
+       res.sendStatus(200);
+     }
+     else {
+       next();
+     }});
 
 async function broadcastMessage(socket, user){
     mongoMessage = await getMessageFromDB({ "room.name": user.room });
@@ -47,7 +56,7 @@ async function sendMedia(host, user, key){
 
     if(message){
         io.to(user.room).emit('requestMedia', formatMessage(message.user.username, 
-            message.message, moment(message.datetime).format("h:mm a"), host));
+            message.message, moment(message.datetime).format("h:mm a"), message.user.id));
     }
 }
 

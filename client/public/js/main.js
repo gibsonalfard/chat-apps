@@ -1,5 +1,5 @@
-// const socket = io('localhost:3000');
-const socket = io('chat-server:3000');
+const socket = io('localhost:3000');
+// const socket = io('chat-server:3000');
 const chatForm = document.getElementById("chat-form");
 const chatMessage = document.querySelector(".chat-messages");
 const roomName = document.getElementById('room-name');
