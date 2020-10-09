@@ -4,8 +4,10 @@ const moment = require('moment');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const db = require("./config/mongodb");
 const socketio = require('socket.io');
-const formatMessage = require("./utils/messages");
+
+const { formatMessage, storeMessage } = require("./utils/messages");
 const { userJoin, getCurrentUser, userLeave, getRoomUsers, listUser } = require("./utils/users");
 const { get } = require('https');
 
@@ -24,6 +26,21 @@ var socketIdList = [];
 // Set Static folder
 // app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true })); 
+
+// Connect to MongoDB
+db.mongoose.connect(db.url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    dbName: "chatapp"
+})
+    .then(() => {
+        console.log("Connected to MongoDB!");
+    })
+    .catch(err => {
+        console.log(db.url);
+        console.log("Cannot connect to MongoDB!", err);
+        process.exit();
+    });
 
 // Run Client Connection
 io.on('connection', socket => {
@@ -74,7 +91,8 @@ io.on('connection', socket => {
     socket.on('chatMessage', ({host, msg}) => {
         const user = getCurrentUser(host);
 
-        time = moment().format("h:mm a");
+        const moment_date = moment();
+        time = moment_date.format("h:mm a");
         messageQueue[user.room].push({
             host:host,
             username: user.username,
@@ -82,7 +100,15 @@ io.on('connection', socket => {
             time: time
         });
 
-        console.log(messageQueue[user.room]);
+        const message = {
+            username: user.username,
+            message: msg,
+            datetime: moment_date.toDate(),
+            room_name: user.room,
+            indexInRoom: messageQueue[user.room].length-1,
+        }
+
+        storeMessage(message);
 
         io.to(user.room).emit('message', formatMessage(user.username, msg, time, host));
     });
@@ -91,7 +117,8 @@ io.on('connection', socket => {
     socket.on('chatImage', (msg) => {
         const user = getCurrentUser(msg.host);
 
-        time = moment().format("h:mm a");
+        const moment_date = moment();
+        time = moment_date.format("h:mm a");
         messageQueue[user.room].push({
             host:host,
             username: user.username,
@@ -99,6 +126,19 @@ io.on('connection', socket => {
             image: true,
             time: time
         });
+        
+        const message = {
+            username: user.username,
+            message: {
+                filename: msg.name,
+                data: msg.media
+            },
+            datetime: moment_date.toDate(),
+            room_name: user.room,
+            indexInRoom: messageQueue[user.room].length-1,
+        }
+
+        storeMessage(message);
 
         io.to(user.room).emit('messageImage', formatMessage(user.username, msg, time, msg.host));
     });
