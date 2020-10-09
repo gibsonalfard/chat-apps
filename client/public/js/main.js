@@ -85,8 +85,6 @@ socket.on('messageMedia', message => {
       name: key,
       media: data
     }
-    console.log(host);
-    console.log(message.host);
     outputImage(message);
   }
 
