@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const moment = require('moment');
 const http = require('http');
 const path = require('path');
+const cors = require('cors');
 const fs = require('fs');
 const db = require("./config/mongodb");
 const socketio = require('socket.io');
@@ -26,6 +27,9 @@ var socketIdList = [];
 // Set Static folder
 // app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true })); 
+
+// Fixing CORS
+app.use(cors());
 
 async function broadcastMessage(socket, user){
     mongoMessage = await getMessageFromDB({ "room.name": user.room });
