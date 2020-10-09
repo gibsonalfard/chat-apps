@@ -58,8 +58,9 @@ socket.on('message', message => {
 // Get Message Image
 socket.on('messageImage', message => {
   saveToStorage(message.text.name, message.text.media);
+  console.log("Message Image");
+  console.log(message);
   outputImage(message);
-  console.log("I hate to looking");
 
   // Scroll down
   chatMessage.scrollTop = chatMessage.scrollHeight;
@@ -68,9 +69,9 @@ socket.on('messageImage', message => {
 socket.on('requestMedia', message => {
   console.log("Request Media");
   console.log(message);
-  saveToStorage(message.text.name, message.text.media);
+  saveToStorage(message.text.filename, message.text.data);
 
-  if(username != message.username){
+  if(host == message.host){
     outputImage(message);
   }
 
@@ -81,11 +82,13 @@ socket.on('requestMedia', message => {
 // Get Message Media
 socket.on('messageMedia', message => {
   key = message.text
+  console.log("Message Media")
+  console.log(message);
   data = findInLocal(key);
   if(data){
     message.text = {
-      name: key,
-      media: data
+      filename: key,
+      data: data
     }
     outputImage(message);
   }
@@ -138,8 +141,8 @@ function getBase64(file) {
   reader.onload = function () {
     var data = {
       "host": host,
-      "name": file.name,
-      "media": reader.result
+      "filename": file.name,
+      "data": reader.result
     };
     socket.emit("chatImage", data);
   };

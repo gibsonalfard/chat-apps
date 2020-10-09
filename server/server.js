@@ -33,20 +33,17 @@ async function broadcastMessage(socket, user){
     for (msg of mongoMessage){
         var emitType = msg.message.data ? "messageMedia" : "message";
         var data =  msg.message.data ? msg.message.filename : msg.message;
-        socket.emit(emitType, formatMessage(msg.user.username, data, msg.datetime, msg.user.id));
+        socket.emit(emitType, formatMessage(msg.user.username, data, moment(msg.datetime).format("h:mm a"), msg.user.id));
     }
 }
 
-async function sendMedia(user, key){
+async function sendMedia(host, user, key){
     mongoMessage = await getMessageFromDB({ "message.filename": key, "room.name": user.room });
     message = mongoMessage[0];
 
-    // console.log("Send Request");
-    // console.log(mongoMessage);
-    // console.log(message);
-
     if(message){
-        io.to(user.room).emit('requestMedia', formatMessage(message.user.username, message.message, message.datetime, message.user.id));
+        io.to(user.room).emit('requestMedia', formatMessage(message.user.username, 
+            message.message, moment(message.datetime).format("h:mm a"), host));
     }
 }
 
@@ -145,7 +142,7 @@ io.on('connection', socket => {
         const moment_date = moment();
         time = moment_date.format("h:mm a");
         messageQueue[user.room].push({
-            host:host,
+            host:msg.host,
             username: user.username,
             message: msg,
             image: true,
@@ -155,8 +152,8 @@ io.on('connection', socket => {
         const message = {
             username: user.username,
             message: {
-                filename: msg.name,
-                data: msg.media
+                filename: msg.filename,
+                data: msg.data
             },
             datetime: moment_date.toDate(),
             room_name: user.room,
@@ -179,7 +176,7 @@ io.on('connection', socket => {
     // Request Media from Client
     socket.on('requestMedia', ({host, key}) => {
         const user = getCurrentUser(host);
-        sendMedia(user, key)
+        sendMedia(host, user, key)
     });
 
     // Broadcast when user disconnects to room
