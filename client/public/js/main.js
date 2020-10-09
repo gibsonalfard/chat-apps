@@ -68,7 +68,7 @@ socket.on('messageImage', message => {
 socket.on('requestMedia', message => {
   saveToStorage(message.text.name, message.text.media);
 
-  if(username != message.username){
+  if(host != message.host){
     outputImage(message);
   }
 
@@ -85,6 +85,8 @@ socket.on('messageMedia', message => {
       name: key,
       media: data
     }
+    console.log(host);
+    console.log(message.host);
     outputImage(message);
   }
 
