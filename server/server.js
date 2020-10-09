@@ -7,7 +7,7 @@ const fs = require('fs');
 const db = require("./config/mongodb");
 const socketio = require('socket.io');
 
-const { formatMessage, storeMessage } = require("./utils/messages");
+const { formatMessage, storeMessage, getMessageFromDB } = require("./utils/messages");
 const { userJoin, getCurrentUser, userLeave, getRoomUsers, listUser } = require("./utils/users");
 const { get } = require('https');
 
@@ -26,6 +26,29 @@ var socketIdList = [];
 // Set Static folder
 // app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true })); 
+
+async function broadcastMessage(socket, user){
+    mongoMessage = await getMessageFromDB({ "room.name": user.room });
+
+    for (msg of mongoMessage){
+        var emitType = msg.message.data ? "messageMedia" : "message";
+        var data =  msg.message.data ? msg.message.filename : msg.message;
+        socket.emit(emitType, formatMessage(msg.user.username, data, msg.datetime, msg.user.id));
+    }
+}
+
+async function sendMedia(user, key){
+    mongoMessage = await getMessageFromDB({ "message.filename": key, "room.name": user.room });
+    message = mongoMessage[0];
+
+    // console.log("Send Request");
+    // console.log(mongoMessage);
+    // console.log(message);
+
+    if(message){
+        io.to(user.room).emit('requestMedia', formatMessage(message.user.username, message.message, message.datetime, message.user.id));
+    }
+}
 
 // Connect to MongoDB
 db.mongoose.connect(db.url, {
@@ -65,11 +88,13 @@ io.on('connection', socket => {
 
         socket.join(user.room);
 
-        for (msg of messageQueue[room]){
-            var emitType = msg.image ? "messageMedia" : "message";
-            var data =  msg.image ? msg.message.name : msg.message;
-            socket.emit(emitType, formatMessage(msg.username, data, msg.time, msg.host));
-        }
+        broadcastMessage(socket, user);
+
+        // for (msg of messageQueue[room]){
+        //     var emitType = msg.image ? "messageMedia" : "message";
+        //     var data =  msg.image ? msg.message.name : msg.message;
+        //     socket.emit(emitType, formatMessage(msg.username, data, msg.time, msg.host));
+        // }
 
         if(newUser){
             socket.emit("notification", formatMessage(botName, 'Welcome to Chat Apps'));
@@ -154,18 +179,7 @@ io.on('connection', socket => {
     // Request Media from Client
     socket.on('requestMedia', ({host, key}) => {
         const user = getCurrentUser(host);
-        message = null;
-
-        for(msg of messageQueue[user.room]){
-            if(msg.message.name == key){
-                message = msg;
-                break;
-            }
-        }
-        console.log(message);
-        if(message){
-            io.to(user.room).emit('requestMedia', formatMessage(message.username, message.message, host));
-        }
+        sendMedia(user, key)
     });
 
     // Broadcast when user disconnects to room

@@ -1,3 +1,4 @@
+const { query } = require('express');
 const moment = require('moment');
 const mongo = require("./mongo");
 
@@ -15,7 +16,14 @@ async function storeMessage(message) {
     mongo.insertMessageData(message);
 }
 
+// Get message by room from MongoDB
+async function getMessageFromDB(query){
+    data = await mongo.getAggregation(query);
+    return data;
+}
+
 module.exports = { 
     formatMessage, 
     storeMessage,
+    getMessageFromDB
 };

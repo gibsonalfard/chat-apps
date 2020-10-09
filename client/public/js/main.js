@@ -66,6 +66,8 @@ socket.on('messageImage', message => {
 });
 
 socket.on('requestMedia', message => {
+  console.log("Request Media");
+  console.log(message);
   saveToStorage(message.text.name, message.text.media);
 
   if(username != message.username){
@@ -230,23 +232,23 @@ function outputImage(message){
   div.classList.add(classAdd); // "data:image/jpg;base64,"+b64(message.text)
   div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>`;
 
-  var mediaType = message.text.media.split(":")[1]
+  var mediaType = message.text.data.split(":")[1]
   mediaType = mediaType.split(";")[0];
   mediaType = mediaType.split("/")[0];
 
   mediaHTML = "";
   switch(mediaType){
     case "video":
-      mediaHTML = `<video class="img-msg" src="${message.text.media}" controls></video>`;
+      mediaHTML = `<video class="img-msg" src="${message.text.data}" controls></video>`;
     break;
     case "image":
-      mediaHTML = `<img class="img-msg" src="${message.text.media}"/>`;
+      mediaHTML = `<img class="img-msg" src="${message.text.data}"/>`;
     break;
     case "audio":
-      mediaHTML = `<audio src="${message.text.media}" controls></audio>`;
+      mediaHTML = `<audio src="${message.text.data}" controls></audio>`;
     break;
     default:
-      mediaHTML = `<a href="${message.text.media}">${message.text.name}</a>`;
+      mediaHTML = `<a href="${message.text.data}">${message.text.filename}</a>`;
   }
 
   div.innerHTML += mediaHTML;
