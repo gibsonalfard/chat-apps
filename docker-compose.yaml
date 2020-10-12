@@ -7,6 +7,8 @@ services:
     mongodb_chat:
         container_name: mongodb_chat
         image: mongo
+        ports: 
+            - 27020:27017
         networks: 
             - websocket-network
 
