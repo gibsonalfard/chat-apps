@@ -58,19 +58,20 @@ socket.on('message', message => {
 // Get Message Image
 socket.on('messageImage', message => {
   saveToStorage(message.text.name, message.text.media);
+  console.log("Message Image");
+  console.log(message);
   outputImage(message);
-  console.log("I hate to looking");
 
   // Scroll down
   chatMessage.scrollTop = chatMessage.scrollHeight;
 });
 
-socket.on('requestMedia', message => {
-  saveToStorage(message.text.name, message.text.media);
+socket.on('requestMedia'+host, message => {
+  console.log("Request Media");
+  console.log(message);
+  saveToStorage(message.text.filename, message.text.data);
 
-  if(host != message.host){
-    outputImage(message);
-  }
+  outputImage(message);
 
   // Scroll down
   chatMessage.scrollTop = chatMessage.scrollHeight;
@@ -79,11 +80,13 @@ socket.on('requestMedia', message => {
 // Get Message Media
 socket.on('messageMedia', message => {
   key = message.text
+  console.log("Message Media")
+  console.log(message);
   data = findInLocal(key);
   if(data){
     message.text = {
-      name: key,
-      media: data
+      filename: key,
+      data: data
     }
     outputImage(message);
   }
@@ -136,8 +139,8 @@ function getBase64(file) {
   reader.onload = function () {
     var data = {
       "host": host,
-      "name": file.name,
-      "media": reader.result
+      "filename": file.name,
+      "data": reader.result
     };
     socket.emit("chatImage", data);
   };
@@ -230,23 +233,23 @@ function outputImage(message){
   div.classList.add(classAdd); // "data:image/jpg;base64,"+b64(message.text)
   div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>`;
 
-  var mediaType = message.text.media.split(":")[1]
+  var mediaType = message.text.data.split(":")[1]
   mediaType = mediaType.split(";")[0];
   mediaType = mediaType.split("/")[0];
 
   mediaHTML = "";
   switch(mediaType){
     case "video":
-      mediaHTML = `<video class="img-msg" src="${message.text.media}" controls></video>`;
+      mediaHTML = `<video class="img-msg" src="${message.text.data}" controls></video>`;
     break;
     case "image":
-      mediaHTML = `<img class="img-msg" src="${message.text.media}"/>`;
+      mediaHTML = `<img class="img-msg" src="${message.text.data}"/>`;
     break;
     case "audio":
-      mediaHTML = `<audio src="${message.text.media}" controls></audio>`;
+      mediaHTML = `<audio src="${message.text.data}" controls></audio>`;
     break;
     default:
-      mediaHTML = `<a href="${message.text.media}">${message.text.name}</a>`;
+      mediaHTML = `<a href="${message.text.data}">${message.text.filename}</a>`;
   }
 
   div.innerHTML += mediaHTML;

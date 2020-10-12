@@ -4,11 +4,24 @@ networks:
     websocket-network:
 
 services:
+    mongodb_chat:
+        container_name: mongodb_chat
+        image: mongo
+        ports: 
+            - 27020:27017
+        networks: 
+            - websocket-network
+
     chat-server:
         container_name: chat-server
         image: chat-server:1.0
         build: ./server
-        network_mode: bridge
+        ports: 
+            - 3000:3000
+        networks: 
+            - websocket-network
+        depends_on: 
+            - mongodb_chat
     
     chat-client:
         container_name: chat-client
@@ -16,7 +29,8 @@ services:
         build: ./client
         ports: 
             - 8088:8088
-        network_mode: bridge
+        networks: 
+            - websocket-network
         depends_on: 
             - chat-server
         environment: 
@@ -28,7 +42,8 @@ services:
         build: ./client
         ports: 
             - 8081:8081
-        network_mode: bridge
+        networks: 
+            - websocket-network
         depends_on: 
             - chat-server
         environment: 
@@ -40,7 +55,8 @@ services:
         build: ./client
         ports: 
             - 8082:8082
-        network_mode: bridge
+        networks: 
+            - websocket-network
         depends_on: 
             - chat-server
         environment: 

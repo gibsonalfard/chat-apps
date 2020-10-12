@@ -3,19 +3,18 @@ const bodyParser = require('body-parser');
 const moment = require('moment');
 const http = require('http');
 const path = require('path');
+const cors = require('cors');
 const fs = require('fs');
 const db = require("./config/mongodb");
 const socketio = require('socket.io');
 
-const { formatMessage, storeMessage } = require("./utils/messages");
+const { formatMessage, storeMessage, getMessageFromDB } = require("./utils/messages");
 const { userJoin, getCurrentUser, userLeave, getRoomUsers, listUser } = require("./utils/users");
 const { get } = require('https');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
-
-io.origins('*:*');
 
 const botName = "Administrator";
 const viewDir = path.join(__dirname, 'public');
@@ -26,6 +25,40 @@ var socketIdList = [];
 // Set Static folder
 // app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true })); 
+
+// Fixing CORS
+io.origins('*:*');
+app.use(cors());
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    if ('OPTIONS' == req.method) {
+       res.sendStatus(200);
+     }
+     else {
+       next();
+     }});
+
+async function broadcastMessage(socket, user){
+    mongoMessage = await getMessageFromDB({ "room.name": user.room });
+
+    for (msg of mongoMessage){
+        var emitType = msg.message.data ? "messageMedia" : "message";
+        var data =  msg.message.data ? msg.message.filename : msg.message;
+        socket.emit(emitType, formatMessage(msg.user.username, data, moment(msg.datetime).format("h:mm a"), msg.user.id));
+    }
+}
+
+async function sendMedia(host, user, key){
+    mongoMessage = await getMessageFromDB({ "message.filename": key, "room.name": user.room });
+    message = mongoMessage[0];
+
+    if(message){
+        io.to(user.room).emit('requestMedia'+host, formatMessage(message.user.username, 
+            message.message, moment(message.datetime).format("h:mm a"), message.user.id));
+    }
+}
 
 // Connect to MongoDB
 db.mongoose.connect(db.url, {
@@ -65,11 +98,13 @@ io.on('connection', socket => {
 
         socket.join(user.room);
 
-        for (msg of messageQueue[room]){
-            var emitType = msg.image ? "messageMedia" : "message";
-            var data =  msg.image ? msg.message.name : msg.message;
-            socket.emit(emitType, formatMessage(msg.username, data, msg.time, msg.host));
-        }
+        broadcastMessage(socket, user);
+
+        // for (msg of messageQueue[room]){
+        //     var emitType = msg.image ? "messageMedia" : "message";
+        //     var data =  msg.image ? msg.message.name : msg.message;
+        //     socket.emit(emitType, formatMessage(msg.username, data, msg.time, msg.host));
+        // }
 
         if(newUser){
             socket.emit("notification", formatMessage(botName, 'Welcome to Chat Apps'));
@@ -130,8 +165,8 @@ io.on('connection', socket => {
         const message = {
             username: user.username,
             message: {
-                filename: msg.name,
-                data: msg.media
+                filename: msg.filename,
+                data: msg.data
             },
             datetime: moment_date.toDate(),
             room_name: user.room,
@@ -154,18 +189,7 @@ io.on('connection', socket => {
     // Request Media from Client
     socket.on('requestMedia', ({host, key}) => {
         const user = getCurrentUser(host);
-        message = null;
-
-        for(msg of messageQueue[user.room]){
-            if(msg.message.name == key){
-                message = msg;
-                break;
-            }
-        }
-        console.log(message);
-        if(message){
-            io.to(user.room).emit('requestMedia', formatMessage(message.username, message.message, host));
-        }
+        sendMedia(host, user, key)
     });
 
     // Broadcast when user disconnects to room

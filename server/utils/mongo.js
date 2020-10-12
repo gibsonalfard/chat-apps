@@ -94,6 +94,56 @@ async function addRoomToUser(roomObj, userId) {
     return User.findByIdAndUpdate(userId, updateQuery, options);
 }
 
+async function aggregateMongo(query){
+    return Message.aggregate(query).then(doc => {
+        return doc;
+    });
+}
+
+// Get Aggregation
+exports.getAggregation = async function (match){
+    var query = [
+        {
+            $lookup:{
+                from: "user",
+                localField: "user",
+                foreignField: "_id",
+                as: "user"
+            }
+        },{
+            $unwind: "$user"
+        },{
+            $project:{
+                __v: 0,
+                "user.__v":0,
+                "user.rooms": 0,
+                "user._id": 0
+            }
+        },{
+            $lookup:{
+                from: "room",
+                localField: "room",
+                foreignField: "_id",
+                as: "room"
+            }
+        },{
+            $unwind: "$room"
+        },{
+            $project:{
+                __v: 0,
+                "room.__v":0,
+                "room._id":0,
+                "room.members":0
+            }
+        },{
+            $match: match
+        } 
+    ];
+
+    doc = await aggregateMongo(query);
+    return doc;
+}
+
 // Insert user data to MongoDB
 exports.userJoinRoom = async function (user, room) {
     console.log(`User ${user.username} is joining ${room}`);
