@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const url = "mongodb://root:hehe90x@localhost:27017/";
+const url = "mongodb://localhost:27017/";
 mongoose.Promise = global.Promise;
 
 const db = {};

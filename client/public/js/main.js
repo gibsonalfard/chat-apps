@@ -66,14 +66,15 @@ socket.on('messageImage', message => {
   chatMessage.scrollTop = chatMessage.scrollHeight;
 });
 
-socket.on('requestMedia', message => {
+socket.on('requestMedia'+host, message => {
   console.log("Request Media");
   console.log(message);
   saveToStorage(message.text.filename, message.text.data);
 
-  if(host == message.host){
-    outputImage(message);
-  }
+  outputImage(message);
+  // if(host == message.host){
+  //   outputImage(message);
+  // }
 
   // Scroll down
   chatMessage.scrollTop = chatMessage.scrollHeight;
