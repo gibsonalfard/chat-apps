@@ -50,12 +50,12 @@ async function broadcastMessage(socket, user){
     }
 }
 
-async function sendMedia(user, key){
+async function sendMedia(host, user, key){
     mongoMessage = await getMessageFromDB({ "message.filename": key, "room.name": user.room });
     message = mongoMessage[0];
 
     if(message){
-        io.to(user.room).emit('requestMedia', formatMessage(message.user.username, 
+        io.to(user.room).emit('requestMedia'+host, formatMessage(message.user.username, 
             message.message, moment(message.datetime).format("h:mm a"), message.user.id));
     }
 }
@@ -189,7 +189,7 @@ io.on('connection', socket => {
     // Request Media from Client
     socket.on('requestMedia', ({host, key}) => {
         const user = getCurrentUser(host);
-        sendMedia(user, key)
+        sendMedia(host, user, key)
     });
 
     // Broadcast when user disconnects to room
