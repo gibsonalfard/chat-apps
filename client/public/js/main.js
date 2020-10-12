@@ -57,7 +57,7 @@ socket.on('message', message => {
 
 // Get Message Image
 socket.on('messageImage', message => {
-  saveToStorage(message.text.name, message.text.media);
+  saveToStorage(message.text.filename, message.text.data);
   console.log("Message Image");
   console.log(message);
   outputImage(message);
