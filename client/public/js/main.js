@@ -71,7 +71,8 @@ socket.on('requestMedia'+host, message => {
   console.log(message);
   saveToStorage(message.text.filename, message.text.data);
 
-  outputImage(message);
+  // outputImage(message);
+  outputMessageIndex(message);
 
   // Scroll down
   chatMessage.scrollTop = chatMessage.scrollHeight;
@@ -122,6 +123,7 @@ function findInLocal(key){
     // console.log(data)
     return data;
   }else{
+    outputEmpty();
     requestMedia(key);
   }
 }
@@ -210,12 +212,56 @@ function outputMessage(message){
 // Output notif to DOM
 function outputNotif(message){
   const outerdiv = document.createElement("div");
-  outerdiv.classList.add("outer-message");
+  outerdiv.classList.add("outer-notif");
   const div = document.createElement("div");
 
   div.classList.add("admin-notification");
 
   div.innerHTML = `<span>${message.time} - ${message.text}</span></p>`;
+  outerdiv.appendChild(div);
+  document.querySelector(".message-container").appendChild(outerdiv);
+}
+
+// Output Insertion by Index
+function outputMessageIndex(message){
+  const div = document.evaluate(
+    `.//div[@class='message-container']/div[@class='outer-message'][${message.index}]/div`, 
+    document,
+    null, 
+    XPathResult.FIRST_ORDERED_NODE_TYPE, 
+    null).singleNodeValue;
+
+  classAdd = (host === message.host) ? "message-mine" : "message";
+  div.classList.add(classAdd);
+
+  var mediaType = message.text.data.split(":")[1]
+  mediaType = mediaType.split(";")[0];
+  mediaType = mediaType.split("/")[0];
+
+  mediaHTML = "";
+  switch(mediaType){
+    case "video":
+      mediaHTML = `<video class="img-msg" src="${message.text.data}" controls></video>`;
+    break;
+    case "image":
+      mediaHTML = `<img class="img-msg" src="${message.text.data}"/>`;
+    break;
+    case "audio":
+      mediaHTML = `<audio src="${message.text.data}" controls></audio>`;
+    break;
+    default:
+      mediaHTML = `<a href="${message.text.data}">${message.text.filename}</a>`;
+  }
+
+  div.innerHTML += mediaHTML;
+}
+
+// Output Empty Message
+function outputEmpty(){
+  const outerdiv = document.createElement("div");
+  outerdiv.classList.add("outer-message");
+  const div = document.createElement("div");
+
   outerdiv.appendChild(div);
   document.querySelector(".message-container").appendChild(outerdiv);
 }
@@ -230,7 +276,7 @@ function outputImage(message){
   // const img = document.createElement("img");
 
   classAdd = (host === message.host) ? "message-mine" : "message";
-  div.classList.add(classAdd); // "data:image/jpg;base64,"+b64(message.text)
+  div.classList.add(classAdd);
   div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>`;
 
   var mediaType = message.text.data.split(":")[1]

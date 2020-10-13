@@ -95,7 +95,7 @@ a {
 	overflow-y: scroll;
 }
 
-.outer-message {
+.outer-message, .outer-notif {
 	width: 100%;
 	float:left;
 }

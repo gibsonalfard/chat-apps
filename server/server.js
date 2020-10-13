@@ -8,9 +8,10 @@ const fs = require('fs');
 const db = require("./config/mongodb");
 const socketio = require('socket.io');
 
-const { formatMessage, storeMessage, getMessageFromDB } = require("./utils/messages");
+const { formatMessage, formatMessageResponse, storeMessage, getMessageFromDB, messageCount } = require("./utils/messages");
 const { userJoin, getCurrentUser, userLeave, getRoomUsers, listUser } = require("./utils/users");
 const { get } = require('https');
+const { mongo } = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
@@ -55,8 +56,17 @@ async function sendMedia(host, user, key){
     message = mongoMessage[0];
 
     if(message){
-        io.to(user.room).emit('requestMedia'+host, formatMessage(message.user.username, 
-            message.message, moment(message.datetime).format("h:mm a"), message.user.id));
+        io.to(user.room).emit('requestMedia'+host, formatMessageResponse(message.user.username, 
+            message.message, moment(message.datetime).format("h:mm a"), message.user.id, message.indexInRoom));
+    }
+}
+
+// Get Last Message Index From DB
+async function initMessageQueue(){
+    mongoMessage = await messageCount();
+
+    for(msg of mongoMessage){
+        messageQueue[msg._id.name] = msg.count;
     }
 }
 
@@ -65,21 +75,26 @@ db.mongoose.connect(db.url, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     dbName: "chatapp"
+}).then(() => {
+    console.log("Connected to MongoDB!");
 })
-    .then(() => {
-        console.log("Connected to MongoDB!");
-    })
-    .catch(err => {
-        console.log(db.url);
-        console.log("Cannot connect to MongoDB!", err);
-        process.exit();
-    });
+.catch(err => {
+    console.log(db.url);
+    console.log("Cannot connect to MongoDB!", err);
+    process.exit();
+});
+
+// Assign Message Queue with Previous data from DB
+initMessageQueue();
+
+console.log("Message Queue Initialization");
+console.log(messageQueue);
 
 // Run Client Connection
 io.on('connection', socket => {
     socket.on('joinRoom', ({host, username, room}) => {
         if(!messageQueue[room]){
-            messageQueue[room] = []
+            messageQueue[room] = 0
         }
         user = getCurrentUser(host)
         newUser = false;
@@ -99,12 +114,6 @@ io.on('connection', socket => {
         socket.join(user.room);
 
         broadcastMessage(socket, user);
-
-        // for (msg of messageQueue[room]){
-        //     var emitType = msg.image ? "messageMedia" : "message";
-        //     var data =  msg.image ? msg.message.name : msg.message;
-        //     socket.emit(emitType, formatMessage(msg.username, data, msg.time, msg.host));
-        // }
 
         if(newUser){
             socket.emit("notification", formatMessage(botName, 'Welcome to Chat Apps'));
@@ -128,24 +137,22 @@ io.on('connection', socket => {
 
         const moment_date = moment();
         time = moment_date.format("h:mm a");
-        messageQueue[user.room].push({
-            host:host,
-            username: user.username,
-            message: msg,
-            time: time
-        });
+        messageQueue[user.room] += 1;
 
         const message = {
             username: user.username,
             message: msg,
             datetime: moment_date.toDate(),
             room_name: user.room,
-            indexInRoom: messageQueue[user.room].length-1,
+            indexInRoom: messageQueue[user.room],
         }
 
         storeMessage(message);
 
         io.to(user.room).emit('message', formatMessage(user.username, msg, time, host));
+
+        console.log("Message Queue");
+        console.log(messageQueue);
     });
 
     // Listen for chat image
@@ -154,13 +161,7 @@ io.on('connection', socket => {
 
         const moment_date = moment();
         time = moment_date.format("h:mm a");
-        messageQueue[user.room].push({
-            host:msg.host,
-            username: user.username,
-            message: msg,
-            image: true,
-            time: time
-        });
+        messageQueue[user.room] += 1;
         
         const message = {
             username: user.username,
@@ -170,12 +171,15 @@ io.on('connection', socket => {
             },
             datetime: moment_date.toDate(),
             room_name: user.room,
-            indexInRoom: messageQueue[user.room].length-1,
+            indexInRoom: messageQueue[user.room],
         }
 
         storeMessage(message);
 
         io.to(user.room).emit('messageImage', formatMessage(user.username, msg, time, msg.host));
+
+        console.log("Message Media Queue");
+        console.log(messageQueue);
     });
 
     // Output on Typing
